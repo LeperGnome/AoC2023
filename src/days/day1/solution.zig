@@ -6,6 +6,18 @@ pub fn solution() !usize {
     return inner(in);
 }
 
+const nums = [_][]const u8{
+    "one",
+    "two",
+    "three",
+    "four",
+    "five",
+    "six",
+    "seven",
+    "eight",
+    "nine",
+};
+
 fn inner(in: []const u8) !usize {
     var sum: usize = 0;
     var iter = std.mem.split(u8, in, "\n");
@@ -66,15 +78,3 @@ test "solution" {
     try expect(try inner("ninesdkjf1") == @as(usize, 91));
     try expect(try inner("6j") == @as(usize, 66));
 }
-
-const nums = [_][]const u8{
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine",
-};
