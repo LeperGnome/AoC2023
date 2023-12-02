@@ -6,16 +6,11 @@ pub fn solution() !usize {
     return inner(in);
 }
 
-const nums = [_][]const u8{
-    "one",
-    "two",
-    "three",
-    "four",
-    "five",
-    "six",
-    "seven",
-    "eight",
-    "nine",
+const ds = [_][]const u8{ // note: order matters
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+};
+const dc = [_]u8{ // note: order matters
+    '1', '2', '3', '4', '5', '6', '7', '8', '9',
 };
 
 fn inner(in: []const u8) !usize {
@@ -23,48 +18,25 @@ fn inner(in: []const u8) !usize {
     var iter = std.mem.split(u8, in, "\n");
     while (iter.next()) |line| {
         if (line.len == 0) continue;
-        var buf = [2]u8{ 0, 0 };
-        const ds = [_]u8{ '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
-        var min_idx: ?usize = std.mem.indexOfAny(u8, line, &ds);
-        if (min_idx) |i| {
-            buf[0] = line[i];
-            buf[1] = line[i];
-        }
-        var max_idx: ?usize = std.mem.lastIndexOfAny(u8, line, &ds);
-        if (max_idx) |i| {
-            buf[1] = line[i];
-        }
+        var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+        defer arena.deinit();
+        const allocator = arena.allocator();
 
-        for (nums, 0..) |num, n_val| {
-            const val: u8 = @intCast(n_val + 49);
-            if (std.mem.lastIndexOf(u8, line, num)) |idx| {
-                if (max_idx) |mi| {
-                    if (idx > mi) {
-                        buf[1] = val;
-                        max_idx = idx;
-                    }
-                } else {
-                    max_idx = idx;
-                    buf[1] = val;
-                }
-            }
-            if (std.mem.indexOf(u8, line, num)) |idx| {
-                if (min_idx) |mi| {
-                    if (idx < mi) {
-                        buf[0] = val;
-                        min_idx = idx;
-                    }
-                } else {
-                    min_idx = idx;
-                    buf[0] = val;
-                }
-            }
+        var rline = line;
+        for (ds, 0..) |s, idx| {
+            const replaced = try std.mem.replaceOwned(u8, allocator, rline, s, &[_]u8{dc[idx]});
+            rline = replaced;
         }
+        std.debug.print("{s}\n", .{rline});
 
-        const num: usize = try std.fmt.parseInt(usize, &buf, 10);
+        const min_idx = std.mem.indexOfAny(u8, rline, &dc).?;
+        const max_idx = std.mem.lastIndexOfAny(u8, rline, &dc) orelse min_idx;
+        const num: usize = try std.fmt.parseInt(usize, &[_]u8{ rline[min_idx], rline[max_idx] }, 10);
+
         sum += num;
     }
+    std.debug.print("{d} \n", .{sum});
     return sum;
 }
 
@@ -77,4 +49,5 @@ test "solution" {
     try expect(try inner("4onetwoaslkdjf9") == @as(usize, 49));
     try expect(try inner("ninesdkjf1") == @as(usize, 91));
     try expect(try inner("6j") == @as(usize, 66));
+    try expect(try inner("eightwo1") == @as(usize, 81));
 }
