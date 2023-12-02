@@ -9,16 +9,14 @@ pub fn solution() !usize {
 
 fn inner(in: []const u8) !usize {
     var iter = std.mem.split(u8, in, "\n");
-
     var sum: usize = 0;
+
     while (iter.next()) |line| {
         if (line.len == 0) continue;
-        var max_red: usize = 1;
-        var max_green: usize = 1;
-        var max_blue: usize = 1;
-        var tmp = std.mem.split(u8, line, ": ");
-        const game_id = try std.fmt.parseInt(usize, tmp.first()[5..], 10);
-        var sets = std.mem.splitSequence(u8, tmp.next().?, "; ");
+        var max_cols = [3]usize{ 1, 1, 1 };
+        var desc = std.mem.split(u8, line, ": ");
+        const game_id = try std.fmt.parseInt(usize, desc.first()[5..], 10);
+        var sets = std.mem.splitSequence(u8, desc.next().?, "; ");
         while (sets.next()) |s| {
             var cols = std.mem.split(u8, s, ", ");
             while (cols.next()) |col| {
@@ -26,20 +24,19 @@ fn inner(in: []const u8) !usize {
                 const n = try std.fmt.parseInt(usize, i.next().?, 10);
                 const cur_col = i.next().?;
                 if (std.mem.eql(u8, cur_col, "red")) {
-                    max_red = @max(max_red, n);
+                    max_cols[0] = @max(max_cols[0], n);
                 }
-                if (std.mem.eql(u8, cur_col, "green") and n > max_green) {
-                    max_green = @max(max_green, n);
+                if (std.mem.eql(u8, cur_col, "green")) {
+                    max_cols[1] = @max(max_cols[1], n);
                 }
-                if (std.mem.eql(u8, cur_col, "blue") and n > max_blue) {
-                    max_blue = @max(max_blue, n);
+                if (std.mem.eql(u8, cur_col, "blue")) {
+                    max_cols[2] = @max(max_cols[2], n);
                 }
             }
         }
-
-        const mul = max_red * max_green * max_blue;
+        const mul = max_cols[0] * max_cols[1] * max_cols[2];
         sum += mul;
-        print("Game {d} [{d}]: red {d}, green {d}, blue {d}\n", .{ game_id, mul, max_red, max_green, max_blue });
+        print("Game {d} [{d}]: red {any}\n", .{ game_id, mul, max_cols });
     }
     return sum;
 }
