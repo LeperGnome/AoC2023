@@ -8,10 +8,10 @@ pub fn solution() !usize {
 }
 
 fn inner(in: []const u8) !usize {
-    var iter = std.mem.split(u8, in, "\n");
+    var lines = std.mem.split(u8, in, "\n");
     var sum: usize = 0;
 
-    while (iter.next()) |line| {
+    while (lines.next()) |line| {
         if (line.len == 0) continue;
         var max_cols = [3]usize{ 1, 1, 1 };
         var desc = std.mem.split(u8, line, ": ");

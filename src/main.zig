@@ -10,6 +10,7 @@ pub fn main() !void {
     const res = try switch (n) {
         1 => root.day1.solution(),
         2 => root.day2.solution(),
+        3 => root.day3.solution(),
         else => error.InvalidDayNumber,
     };
     std.debug.print("Solution for day #{d}: {d}\n", .{ n, res });
