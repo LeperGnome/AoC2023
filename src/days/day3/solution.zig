@@ -110,12 +110,16 @@ fn inner(in: []const u8) !usize {
 
     var sum: usize = 0;
     var lines = std.mem.splitSequence(u8, in, "\n");
+
+    // cloning into dynamic array (this would be just .collect::<Vec<String>>() in rust)
     var clines = ArrayList([]const u8).init(allocator);
     defer clines.deinit();
     while (lines.next()) |line| {
         try clines.append(line);
     }
+    // map of potential gear coordinates (x,y) to accumulated value
     var gears = std.AutoHashMap([2]usize, usize).init(allocator);
+    // iterator over window of 3 rows, so i can check adjacent elements of middle row
     var groups = std.mem.window([]const u8, clines.items, 3, 1);
     var group_n: usize = 0;
     while (groups.next()) |line_group| : (group_n += 1) {
@@ -123,8 +127,11 @@ fn inner(in: []const u8) !usize {
         if (line_group[2].len == 0) {
             break;
         }
+        // buffer for found number e.g. ['2', '3', '4'] for 234
         var buf = ArrayList(u8).init(allocator);
         defer buf.deinit();
+
+        // coordinates of adjacent gear if any
         var adj_gear: ?[2]usize = null;
 
         for (mid_line, 0..) |col, x| {
@@ -132,6 +139,7 @@ fn inner(in: []const u8) !usize {
                 continue;
             }
             if (std.ascii.isDigit(col)) {
+                // accumulating number from digist
                 try buf.append(col);
                 if (near_gear(
                     x,
@@ -139,14 +147,17 @@ fn inner(in: []const u8) !usize {
                     &line_group,
                     group_n,
                 )) |coord| {
+                    // saving adjacent gear coordinates
                     adj_gear = coord;
                 }
             } else {
+                // registering gear when number ends
                 try register_gear(&gears, adj_gear, buf, &sum);
                 adj_gear = null;
                 buf.clearAndFree();
             }
         }
+        // registering gear for last number
         try register_gear(&gears, adj_gear, buf, &sum);
     }
 
@@ -161,6 +172,7 @@ fn inner(in: []const u8) !usize {
 fn register_gear(gears: *std.AutoHashMap([2]usize, usize), gc: ?[2]usize, buf: std.ArrayList(u8), sum: *usize) !void {
     if (gc) |coord| {
         const num = try std.fmt.parseInt(usize, buf.items, 10);
+        // multiplying existing accumulator for gear's coordinates or adding new one
         if (gears.*.getEntry(coord)) |e| {
             e.value_ptr.* *= num;
             sum.* += e.value_ptr.*;
