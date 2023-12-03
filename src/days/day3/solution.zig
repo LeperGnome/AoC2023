@@ -3,12 +3,12 @@ const expect = @import("std").testing.expect;
 const print = std.debug.print;
 const ArrayList = std.ArrayList;
 
-pub fn solution1() !usize {
+pub fn solution_first() !usize {
     const in = @embedFile("./input.txt");
-    return inner1(in);
+    return inner_first(in);
 }
 
-fn inner1(in: []const u8) !usize {
+fn inner_first(in: []const u8) !usize {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const allocator = arena.allocator();
@@ -56,8 +56,6 @@ fn inner1(in: []const u8) !usize {
             sum += num;
         }
     }
-
-    print("sum: {d}\n", .{sum});
     return sum;
 }
 
@@ -82,7 +80,7 @@ fn num_has_adjacent_symbol1(x: usize, y: usize, map: []const []const u8) bool {
     return false;
 }
 
-test "solution1" {
+test "solution_first" {
     const test_in =
         \\............
         \\.467..114...
@@ -97,7 +95,7 @@ test "solution1" {
         \\..664.598...
         \\............
     ;
-    try expect(try inner1(test_in) == @as(usize, 4361));
+    try expect(try inner_first(test_in) == @as(usize, 4361));
 }
 
 pub fn solution() !usize {
@@ -127,8 +125,7 @@ fn inner(in: []const u8) !usize {
         }
         var buf = ArrayList(u8).init(allocator);
         defer buf.deinit();
-        print("{s}\n", .{mid_line});
-        var gc: ?[2]usize = null;
+        var adj_gear: ?[2]usize = null;
 
         for (mid_line, 0..) |col, x| {
             if (x == mid_line.len - 1 or x == 0) {
@@ -139,38 +136,18 @@ fn inner(in: []const u8) !usize {
                 if (near_gear(
                     x,
                     1,
-                    line_group,
+                    &line_group,
                     group_n,
                 )) |coord| {
-                    gc = coord;
+                    adj_gear = coord;
                 }
             } else {
-                if (gc) |coord| {
-                    print("found gear: {any}\n", .{coord});
-                    const num = try std.fmt.parseInt(usize, buf.items, 10);
-                    if (gears.getEntry(coord)) |e| {
-                        e.value_ptr.* *= num;
-                        sum += e.value_ptr.*;
-                        print("adding to sum: {d}\n", .{num});
-                    } else {
-                        try gears.put(coord, num);
-                    }
-                }
-                gc = null;
+                try register_gear(&gears, adj_gear, buf, &sum);
+                adj_gear = null;
                 buf.clearAndFree();
             }
         }
-        if (gc) |coord| {
-            print("found gear: {any}\n", .{coord});
-            const num = try std.fmt.parseInt(usize, buf.items, 10);
-            if (gears.getEntry(coord)) |e| {
-                e.value_ptr.* *= num;
-                sum += e.value_ptr.*;
-                print("adding to sum: {d}\n", .{num});
-            } else {
-                try gears.put(coord, num);
-            }
-        }
+        try register_gear(&gears, adj_gear, buf, &sum);
     }
 
     var i = gears.iterator();
@@ -178,19 +155,28 @@ fn inner(in: []const u8) !usize {
         print("gear: {d}: {d}\n", .{ e.key_ptr.*, e.value_ptr.* });
     }
 
-    print("sum: {d}\n", .{sum});
     return sum;
 }
 
-fn near_gear(x: usize, y: usize, map: []const []const u8, y_offset: usize) ?[2]usize {
+fn register_gear(gears: *std.AutoHashMap([2]usize, usize), gc: ?[2]usize, buf: std.ArrayList(u8), sum: *usize) !void {
+    if (gc) |coord| {
+        const num = try std.fmt.parseInt(usize, buf.items, 10);
+        if (gears.*.getEntry(coord)) |e| {
+            e.value_ptr.* *= num;
+            sum.* += e.value_ptr.*;
+        } else {
+            try gears.put(coord, num);
+        }
+    }
+}
+
+fn near_gear(x: usize, y: usize, map: *const []const []const u8, y_offset: usize) ?[2]usize {
     for ([_]i64{ -1, 0, 1 }) |dy| {
         for ([_]i64{ -1, 1 }) |dx| {
             const gy = @as(usize, @intCast(@as(i64, @intCast(y)) + dy));
             const gx = @as(usize, @intCast(@as(i64, @intCast(x)) + dx));
-            const el = map[gy][gx];
-            print("------: {c} ({c})\n", .{ el, map[y][x] });
+            const el = map.*[gy][gx];
             if (el == '*') {
-                print("nice: {c}\n", .{el});
                 return [2]usize{ gx, gy + y_offset };
             }
         }
