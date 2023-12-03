@@ -3,6 +3,8 @@ const expect = @import("std").testing.expect;
 const print = std.debug.print;
 const ArrayList = std.ArrayList;
 
+const Matrix = []const []const u8;
+
 // ---------------- part 1 ------------------
 
 pub fn solution_first() !usize {
@@ -61,7 +63,7 @@ fn inner_first(in: []const u8) !usize {
     return sum;
 }
 
-fn num_has_adjacent_symbol1(x: usize, y: usize, map: []const []const u8) bool {
+fn num_has_adjacent_symbol1(x: usize, y: usize, map: Matrix) bool {
     for ([_]i64{ -1, 0, 1 }) |dy| {
         for ([_]i64{ -1, 1 }) |dx| {
             const el = map[
@@ -102,6 +104,12 @@ test "solution_first" {
 
 // ---------------- part 2 ------------------
 
+const Coords = struct {
+    x: usize,
+    y: usize,
+};
+const Gears = std.AutoHashMap(Coords, usize);
+
 pub fn solution() !usize {
     const in = @embedFile("./input.txt");
     return inner(in);
@@ -122,7 +130,7 @@ fn inner(in: []const u8) !usize {
         try clines.append(line);
     }
     // map of potential gear coordinates (x,y) to accumulated value
-    var gears = std.AutoHashMap([2]usize, usize).init(allocator);
+    var gears = Gears.init(allocator);
     // iterator over window of 3 rows, so i can check adjacent elements of middle row
     var groups = std.mem.window([]const u8, clines.items, 3, 1);
     var group_n: usize = 0;
@@ -132,22 +140,21 @@ fn inner(in: []const u8) !usize {
             break;
         }
         // buffer for found number e.g. ['2', '3', '4'] for 234
-        var buf = ArrayList(u8).init(allocator);
-        defer buf.deinit();
+        var num_buf = ArrayList(u8).init(allocator);
+        defer num_buf.deinit();
 
         // coordinates of adjacent gear if any
-        var adj_gear: ?[2]usize = null;
+        var adj_gear: ?Coords = null;
 
-        for (mid_line, 0..) |col, x| {
+        for (mid_line, 0..) |ch, x| {
             if (x == mid_line.len - 1 or x == 0) {
                 continue;
             }
-            if (std.ascii.isDigit(col)) {
-                // accumulating number from digist
-                try buf.append(col);
+            if (std.ascii.isDigit(ch)) {
+                // accumulating number from digits
+                try num_buf.append(ch);
                 if (near_gear(
-                    x,
-                    1,
+                    .{ .x = x, .y = 1 },
                     &line_group,
                     group_n,
                 )) |coord| {
@@ -156,24 +163,24 @@ fn inner(in: []const u8) !usize {
                 }
             } else {
                 // registering gear when number ends
-                try register_gear(&gears, adj_gear, buf, &sum);
+                try register_gear(&gears, adj_gear, num_buf, &sum);
                 adj_gear = null;
-                buf.clearAndFree();
+                num_buf.clearAndFree();
             }
         }
         // registering gear for last number
-        try register_gear(&gears, adj_gear, buf, &sum);
+        try register_gear(&gears, adj_gear, num_buf, &sum);
     }
 
     var i = gears.iterator();
     while (i.next()) |e| {
-        print("gear: {d}: {d}\n", .{ e.key_ptr.*, e.value_ptr.* });
+        print("gear: {any}: {d}\n", .{ e.key_ptr.*, e.value_ptr.* });
     }
 
     return sum;
 }
 
-fn register_gear(gears: *std.AutoHashMap([2]usize, usize), gc: ?[2]usize, buf: std.ArrayList(u8), sum: *usize) !void {
+fn register_gear(gears: *Gears, gc: ?Coords, buf: std.ArrayList(u8), sum: *usize) !void {
     if (gc) |coord| {
         const num = try std.fmt.parseInt(usize, buf.items, 10);
         // multiplying existing accumulator for gear's coordinates or adding new one
@@ -186,14 +193,14 @@ fn register_gear(gears: *std.AutoHashMap([2]usize, usize), gc: ?[2]usize, buf: s
     }
 }
 
-fn near_gear(x: usize, y: usize, map: *const []const []const u8, y_offset: usize) ?[2]usize {
+fn near_gear(coords: Coords, map: *const Matrix, y_offset: usize) ?Coords {
     for ([_]i64{ -1, 0, 1 }) |dy| {
         for ([_]i64{ -1, 1 }) |dx| {
-            const gy = @as(usize, @intCast(@as(i64, @intCast(y)) + dy));
-            const gx = @as(usize, @intCast(@as(i64, @intCast(x)) + dx));
+            const gy = @as(usize, @intCast(@as(i64, @intCast(coords.y)) + dy));
+            const gx = @as(usize, @intCast(@as(i64, @intCast(coords.x)) + dx));
             const el = map.*[gy][gx];
             if (el == '*') {
-                return [2]usize{ gx, gy + y_offset };
+                return Coords{ .x = gx, .y = gy + y_offset };
             }
         }
     }
