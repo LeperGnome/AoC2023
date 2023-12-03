@@ -3,6 +3,8 @@ const expect = @import("std").testing.expect;
 const print = std.debug.print;
 const ArrayList = std.ArrayList;
 
+// ---------------- part 1 ------------------
+
 pub fn solution_first() !usize {
     const in = @embedFile("./input.txt");
     return inner_first(in);
@@ -97,6 +99,8 @@ test "solution_first" {
     ;
     try expect(try inner_first(test_in) == @as(usize, 4361));
 }
+
+// ---------------- part 2 ------------------
 
 pub fn solution() !usize {
     const in = @embedFile("./input.txt");
