@@ -11,6 +11,7 @@ pub fn main() !void {
         1 => root.day1.solution(),
         2 => root.day2.solution(),
         3 => root.day3.solution(),
+        4 => root.day4.solution(),
         else => error.InvalidDayNumber,
     };
     std.debug.print("Solution for day #{d}: {d}\n", .{ n, res });
