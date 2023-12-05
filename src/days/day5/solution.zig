@@ -22,12 +22,13 @@ fn inner(in: []const u8) !usize {
 
     var lines = std.mem.split(u8, in, "\n");
 
-    var seeds = ArrayList(usize).init(allocator);
+    var seed_ranges = ArrayList([2]usize).init(allocator);
 
     var seeds_int_iter = std.mem.splitSequence(u8, lines.next().?[7..], " ");
     while (seeds_int_iter.next()) |seed| {
         const s = try std.fmt.parseInt(usize, seed, 10);
-        try seeds.append(s);
+        const n = try std.fmt.parseInt(usize, seeds_int_iter.next().?, 10);
+        try seed_ranges.append(.{ s, n });
     }
     var maps = ArrayList(Mapping).init(allocator);
     var cur_map = Mapping.init(allocator);
@@ -51,32 +52,26 @@ fn inner(in: []const u8) !usize {
         try cur_map.append(r);
     }
 
-    var locatoins = ArrayList(usize).init(allocator);
+    var location: usize = std.math.maxInt(usize);
 
-    for (seeds.items) |seed| {
-        var cur_value: usize = seed;
-        for (maps.items) |mapping| {
-            cur_value = sourceToDest(cur_value, mapping);
+    for (seed_ranges.items) |seeds_range| {
+        for (0..seeds_range[1]) |offset| {
+            var cur_value: usize = seeds_range[0] + offset;
+            for (maps.items) |mapping| {
+                cur_value = sourceToDest(cur_value, mapping);
+            }
+            location = @min(location, cur_value);
         }
-        try locatoins.append(cur_value);
     }
 
-    var min = locatoins.items[0];
-    for (locatoins.items, 1..) |i, x| {
-        _ = x;
-        min = @min(min, i);
-    }
-    return min;
+    return location;
 }
 
 fn sourceToDest(source: usize, mapping: Mapping) usize {
     for (mapping.items) |range| {
-        print("looking at range: {any}, source: {d}\n", .{ range, source });
         if (source >= range.source_start and source <= range.source_start + range.len - 1) {
             const offset = source - range.source_start;
-            const dest = range.dest_start + offset;
-            print("n[{d} --> {d}]\n", .{ source, dest });
-            return dest;
+            return range.dest_start + offset;
         }
     }
     return source;
