@@ -6,6 +6,7 @@ pub fn main() !void {
     _ = args.skip();
 
     const n = try std.fmt.parseInt(u8, args.next().?, 10);
+    var timer = try std.time.Timer.start();
 
     const res = try switch (n) {
         1 => root.day1.solution(),
@@ -16,5 +17,6 @@ pub fn main() !void {
         6 => root.day6.solution(),
         else => error.InvalidDayNumber,
     };
-    std.debug.print("Solution for day #{d}: {d}\n", .{ n, res });
+    const took = std.fmt.fmtDuration(timer.read());
+    std.debug.print("Solution for day #{d}: {d}\nTook: {}\n", .{ n, res, took });
 }
