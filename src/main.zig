@@ -13,6 +13,7 @@ pub fn main() !void {
         3 => root.day3.solution(),
         4 => root.day4.solution(),
         5 => root.day5.solution(),
+        6 => root.day6.solution(),
         else => error.InvalidDayNumber,
     };
     std.debug.print("Solution for day #{d}: {d}\n", .{ n, res });

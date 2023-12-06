@@ -21,7 +21,6 @@ fn inner(in: []const u8) !usize {
     const allocator = arena.allocator();
 
     var lines = std.mem.split(u8, in, "\n");
-
     var seed_ranges = ArrayList([2]usize).init(allocator);
 
     var seeds_int_iter = std.mem.splitSequence(u8, lines.next().?[7..], " ");
