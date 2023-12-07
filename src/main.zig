@@ -15,6 +15,7 @@ pub fn main() !void {
         4 => root.day4.solution(),
         5 => root.day5.solution(),
         6 => root.day6.solution(),
+        7 => root.day7.solution(),
         else => error.InvalidDayNumber,
     };
     const took = std.fmt.fmtDuration(timer.read());
