@@ -12,10 +12,11 @@ pub fn main() !void {
         1 => root.day1.solution(),
         2 => root.day2.solution(),
         3 => root.day3.solution(),
-        4 => root.day4.solution(),
+        // 4 => root.day4.solution(),
         5 => root.day5.solution(),
         6 => root.day6.solution(),
-        7 => root.day7.solution(),
+        // 7 => root.day7.solution(),
+        8 => root.day8.solution(),
         else => error.InvalidDayNumber,
     };
     const took = std.fmt.fmtDuration(timer.read());

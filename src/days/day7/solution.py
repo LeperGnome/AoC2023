@@ -52,5 +52,3 @@ with open("./input.txt", "r") as f:
         s += rank*hand.bid
 
     print(s)
-
-
