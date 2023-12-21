@@ -37,11 +37,13 @@ dists = {}
 optimal = float("inf")
 opt_log = None
 
+pre_turn = 4
+max_straight = 10
+
 while len(q):
-    print(len(q))
     tile, log = heapq.heappop(q)
 
-    if (tile.x, tile.y) == end:
+    if (tile.x, tile.y) == end and tile.n >= pre_turn:
         if tile.acc < optimal:
             optimal = tile.acc
             opt_log = log
@@ -60,20 +62,18 @@ while len(q):
         nx, ny = tile.x + dx, tile.y + dy
         if nx < 0 or nx >= len(M[0]) or ny < 0 or ny >= len(M):
             continue
-        acc_add = int(M[ny][nx])
-        new_acc = tile.acc + acc_add
+        new_acc = tile.acc + int(M[ny][nx])
+
         if new_d == tile.d:
-            if tile.n >= 3:
-                continue
-            new_n = tile.n + 1
-            new_t = TileState(new_acc, new_d, nx, ny, new_n)
-            heapq.heappush(
-                q,
-                (
-                    new_t,
-                    log + [(nx, ny)],
-                ),
-            )
+            if tile.n < max_straight:
+                new_t = TileState(new_acc, new_d, nx, ny, tile.n + 1)
+                heapq.heappush(
+                    q,
+                    (
+                        new_t,
+                        log + [(nx, ny)],
+                    ),
+                )
         elif (
             new_d != Dir.DOWN
             and tile.d == Dir.UP
@@ -83,9 +83,8 @@ while len(q):
             and tile.d == Dir.LEFT
             or new_d != Dir.LEFT
             and tile.d == Dir.RIGHT
-        ):
+        ) and tile.n >= pre_turn:
             new_t = TileState(new_acc, new_d, nx, ny, 1)
-
             heapq.heappush(
                 q,
                 (
